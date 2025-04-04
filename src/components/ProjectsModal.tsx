@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { theme } from '../styles/theme';
+
+interface ProjectsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
 
 const ModalOverlay = styled(motion.div)`
   position: fixed;
@@ -9,71 +14,35 @@ const ModalOverlay = styled(motion.div)`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1002;
+  z-index: 1000;
 `;
 
 const ModalContent = styled(motion.div)`
-  background: ${theme.colors.terminalBackground};
-  color: ${theme.colors.terminal};
-  padding: ${theme.spacing.xl} ${theme.spacing.lg};
+  background: ${({ theme }) => theme.colors.terminalBackground};
   border-radius: 8px;
-  width: 80%;
+  padding: 20px;
   max-width: 800px;
-  max-height: 80vh;
+  width: 90%;
+  max-height: 90vh;
   overflow-y: auto;
-  font-family: ${theme.fonts.mono};
-  border: 1px solid ${theme.colors.terminal};
   position: relative;
-
-  /* Custom scrollbar styling */
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: ${theme.colors.terminal};
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 255, 0, 0.8);
-  }
 `;
 
-const ProjectLink = styled.a`
-  color: ${theme.colors.terminal};
-  text-decoration: none;
-  display: block;
-  margin: ${theme.spacing.sm} 0;
-  padding: ${theme.spacing.xs};
-  border: 1px solid transparent;
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: ${theme.colors.terminal};
-    background: rgba(0, 255, 0, 0.1);
-  }
-`;
-
-const CloseButton = styled(motion.button)`
+const CloseButton = styled.button`
   position: absolute;
-  top: ${theme.spacing.md};
-  left: ${theme.spacing.md};
+  top: ${theme.spacing.sm};
+  right: ${theme.spacing.sm};
   background: transparent;
   border: 1px solid ${theme.colors.terminal};
   color: ${theme.colors.terminal};
   padding: ${theme.spacing.xs} ${theme.spacing.sm};
-  font-family: ${theme.fonts.mono};
   cursor: pointer;
-  transition: all 0.3s ease;
+  border-radius: 4px;
+  font-family: ${theme.fonts.mono};
 
   &:hover {
     background: ${theme.colors.terminal};
@@ -81,59 +50,129 @@ const CloseButton = styled(motion.button)`
   }
 `;
 
-const ProjectContainer = styled.div`
+const ProjectGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: ${theme.spacing.lg};
   margin-top: ${theme.spacing.lg};
-  padding: ${theme.spacing.md};
-  border: 1px solid ${theme.colors.terminal};
-  border-radius: 4px;
-  margin-bottom: ${theme.spacing.lg};
+`;
 
-  &:last-child {
-    margin-bottom: 0;
+const ProjectCard = styled(motion.div)`
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.primary};
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
   }
 `;
 
+const ProjectHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+`;
+
 const ProjectTitle = styled.h3`
-  margin-bottom: ${theme.spacing.sm};
-  color: ${theme.colors.terminal};
+  color: ${({ theme }) => theme.colors.primary};
+  margin: 0;
+`;
+
+const ProjectLinks = styled.div`
+  display: flex;
+  gap: 12px;
+`;
+
+const ProjectLink = styled(motion.a)`
+  color: ${({ theme }) => theme.colors.primary};
+  text-decoration: none;
+  padding: 4px 8px;
+  border: 1px solid ${({ theme }) => theme.colors.primary};
+  border-radius: 4px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.primary};
+    color: ${({ theme }) => theme.colors.background};
+  }
 `;
 
 const ProjectDescription = styled.p`
-  margin-bottom: ${theme.spacing.sm};
-  line-height: 1.5;
+  margin-bottom: 16px;
+  line-height: 1.6;
 `;
 
-const ProjectTech = styled.p`
-  margin-bottom: ${theme.spacing.sm};
-  font-style: italic;
+const ProjectTech = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 `;
 
-interface ProjectsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+const TechTag = styled.span`
+  background: ${({ theme }) => theme.colors.primary}22;
+  color: ${({ theme }) => theme.colors.primary};
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+`;
+
+const SearchBar = styled.input`
+  width: 100%;
+  padding: 8px 16px;
+  margin-bottom: 20px;
+  border: 1px solid ${({ theme }) => theme.colors.primary};
+  background: ${({ theme }) => theme.colors.background};
+  color: ${({ theme }) => theme.colors.text};
+  font-family: 'Fira Code', monospace;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary}33;
+  }
+`;
 
 const ProjectsModal: React.FC<ProjectsModalProps> = ({ isOpen, onClose }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+
   const projects = [
     {
-      name: 'Steer - Training Companion',
-      description: 'Course management platform with user authentication and performance tracking',
-      tech: 'React.js, Node.js, MySQL, Redis, Docker',
-      link: 'https://github.com/joshualead/steer'
+      title: 'Steer - Training Companion',
+      description: 'Created a course management platform adopted by ADP teams, featuring user authentication (JWT) and performance tracking, reducing onboarding time by 20%.',
+      technologies: ['React.js', 'Node.js', 'MySQL', 'Redis', 'Docker'],
+      githubLink: 'https://github.com/joshualead/steer'
     },
     {
-      name: 'LUCAS - Personal Assistant',
-      description: 'API-integrated virtual assistant automating daily tasks',
-      tech: 'Python, Tkinter',
-      link: 'https://github.com/joshualead/lucas'
+      title: 'LUCAS - Personal Assistant',
+      description: 'Built an API-integrated virtual assistant automating 10 daily tasks, saving users ~2 hours weekly.',
+      technologies: ['Python', 'Tkinter'],
+      githubLink: 'https://github.com/joshualead/lucas'
     },
     {
-      name: 'Data Analyzer',
-      description: 'Windmill site selection tool with custom data models',
-      tech: 'Python, Pandas, Matplotlib',
-      link: 'https://github.com/joshualead/data-analyzer'
+      title: 'Data Analyzer',
+      description: 'Designed a windmill site selection tool, cutting analysis time by 30% with custom data models.',
+      technologies: ['Python', 'Pandas', 'Matplotlib'],
+      githubLink: 'https://github.com/joshualead/data-analyzer'
     }
   ];
+
+  const filteredProjects = useMemo(() => {
+    if (!searchQuery.trim()) return projects;
+    
+    const query = searchQuery.toLowerCase();
+    return projects.filter(project => 
+      project.title.toLowerCase().includes(query) ||
+      project.description.toLowerCase().includes(query) ||
+      project.technologies.some(tech => tech.toLowerCase().includes(query))
+    );
+  }, [searchQuery]);
 
   return (
     <AnimatePresence>
@@ -145,33 +184,48 @@ const ProjectsModal: React.FC<ProjectsModalProps> = ({ isOpen, onClose }) => {
           onClick={onClose}
         >
           <ModalContent
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            onClick={e => e.stopPropagation()}
+            exit={{ scale: 0.9, opacity: 0 }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <CloseButton
-              onClick={onClose}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              CLOSE
-            </CloseButton>
-            <h2>Projects</h2>
-            {projects.map((project, index) => (
-              <ProjectContainer key={index}>
-                <ProjectTitle>{project.name}</ProjectTitle>
-                <ProjectDescription>{project.description}</ProjectDescription>
-                <ProjectTech>Tech Stack: {project.tech}</ProjectTech>
-                <ProjectLink 
-                  href={project.link} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
+            <CloseButton onClick={onClose}>CLOSE</CloseButton>
+            <h2 style={{ color: theme.colors.terminal, fontFamily: theme.fonts.mono }}>Projects</h2>
+            <SearchBar
+              type="text"
+              placeholder="Search projects by title, description, or technology..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <ProjectGrid>
+              {filteredProjects.map((project, index) => (
+                <ProjectCard
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
                 >
-                  View on GitHub →
-                </ProjectLink>
-              </ProjectContainer>
-            ))}
+                  <ProjectHeader>
+                    <ProjectTitle>{project.title}</ProjectTitle>
+                    <ProjectLinks>
+                      <ProjectLink
+                        href={project.githubLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        GitHub
+                      </ProjectLink>
+                    </ProjectLinks>
+                  </ProjectHeader>
+                  <ProjectDescription>{project.description}</ProjectDescription>
+                  <ProjectTech>
+                    {project.technologies.map((tech, techIndex) => (
+                      <TechTag key={techIndex}>{tech}</TechTag>
+                    ))}
+                  </ProjectTech>
+                </ProjectCard>
+              ))}
+            </ProjectGrid>
           </ModalContent>
         </ModalOverlay>
       )}

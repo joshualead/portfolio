@@ -1,32 +1,26 @@
-import { useState } from 'react'
-import Terminal from './components/Terminal'
+import React from 'react'
 import styled from 'styled-components'
+import { ThemeProvider } from 'styled-components'
 import { theme } from './styles/theme'
+import Terminal from './components/Terminal'
 
 const AppContainer = styled.div`
   min-height: 100vh;
-  background-color: ${theme.colors.background};
-  color: ${theme.colors.text};
-  font-family: ${theme.fonts.sans};
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: ${({ theme }) => theme.colors.background};
+  padding: 20px;
 `
 
-function App() {
-  const [showTerminal, setShowTerminal] = useState(true)
-  const [isComplete, setIsComplete] = useState(false)
-
-  const handleTerminalComplete = () => {
-    setIsComplete(true)
-    // Don't hide the terminal immediately
-    // Instead, we can add a fade-out animation after a delay
-    setTimeout(() => {
-      setShowTerminal(false)
-    }, 2000) // 2 second delay before hiding
-  }
-
+const App: React.FC = () => {
   return (
-    <AppContainer>
-      {showTerminal && <Terminal onComplete={handleTerminalComplete} />}
-    </AppContainer>
+    <ThemeProvider theme={theme}>
+      <AppContainer>
+        <Terminal />
+      </AppContainer>
+    </ThemeProvider>
   )
 }
 
